@@ -13,9 +13,10 @@ Provides capabilities for backing up and restoring a windows certificate authori
 - Old backup cleanup
 - Works with Task Scheduler
 
+---
 
 ### Delete-Certificate.ps1
-Provides capabilities for completely deleting certificates (including private keys which remain when just deleting the certificate in certlm.msc and certmgr.msc)
+Provides capabilities for completely deleting certificates (including private keys, which remain stored on the computer when just deleting the certificate in certlm.msc or certmgr.msc).
 #### Features:
 - Certificate deletion
 - WhatIf for showing paths to certificates and keyfiles
