@@ -144,7 +144,7 @@ if ($PSCmdlet.ParameterSetName -eq 'Help') {
     Write-Host '-Restore' -ForegroundColor DarkGray
     Write-Host "    Restores the CA from the backup at `"D:\Backup\CA-Backup\$(Get-Date -Format yyyy-dd-MM-HH-mm)`" with the password stored in the file `"C:\backupPW.txt`" including starting and stopping the ca service"
     Write-Host ''
-    Write-Host '# Parameter' -ForegroundColor Cyan
+    Write-Host '# Parameters' -ForegroundColor Cyan
     Write-Host '    -BackupPath [Path to store the backup]' -ForegroundColor Green
     Write-Host '        The root path for storing backups. The actual path is appended by the current date and time'
     Write-Host '        Example: -Path "D:\Backup\CA-Backup"'
@@ -177,11 +177,13 @@ if ($PSCmdlet.ParameterSetName -eq 'Help') {
     Write-Host '        Flag for skipping cleanup of old backups'
     Write-Host ''
     Write-Host ''
+
+    exit
 }
 #endregion
 
 #region Save password as secure string
-elseif ($PSCmdlet.ParameterSetName -eq 'SavePassword') {
+if ($PSCmdlet.ParameterSetName -eq 'SavePassword') {
     try {
         if (-not $(Test-Path $PasswordFile)) { New-Item -Path $PasswordFile -ItemType File -Force | Out-Null }
     
