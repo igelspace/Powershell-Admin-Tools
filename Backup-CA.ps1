@@ -54,7 +54,23 @@ Param(
     [Parameter(Mandatory = $false, ParameterSetName = 'RestoreWithSecurePassword')]
     [Parameter(Mandatory = $false, ParameterSetName = 'RestoreWithPassword')]
     [Parameter(Mandatory = $false, ParameterSetName = 'RestoreWithPasswordFile')]
-    [switch] $SkipRegistryBackup = $false
+    [switch] $SkipRegistryBackup = $false,
+
+    [Parameter(Mandatory = $false, ParameterSetName = 'Password')]
+    [Parameter(Mandatory = $false, ParameterSetName = 'SecurePassword')]
+    [Parameter(Mandatory = $false, ParameterSetName = 'PasswordFile')]
+    [Parameter(Mandatory = $false, ParameterSetName = 'RestoreWithSecurePassword')]
+    [Parameter(Mandatory = $false, ParameterSetName = 'RestoreWithPassword')]
+    [Parameter(Mandatory = $false, ParameterSetName = 'RestoreWithPasswordFile')]
+    [switch] $SkipCertEnrollBackup = $false,
+
+    [Parameter(Mandatory = $false, ParameterSetName = 'Password')]
+    [Parameter(Mandatory = $false, ParameterSetName = 'SecurePassword')]
+    [Parameter(Mandatory = $false, ParameterSetName = 'PasswordFile')]
+    [Parameter(Mandatory = $false, ParameterSetName = 'RestoreWithSecurePassword')]
+    [Parameter(Mandatory = $false, ParameterSetName = 'RestoreWithPassword')]
+    [Parameter(Mandatory = $false, ParameterSetName = 'RestoreWithPasswordFile')]
+    [switch] $SkipCAPolicyBackup = $false
 )
 #endregion
 
@@ -249,17 +265,21 @@ elseif (
             reg export "HKLM\System\CurrentControlSet\Services\CertSvc" "$DatePath\CertSvc.reg"
         }
 
-        if (Test-Path -Path 'C:\Windows\CAPolicy.inf') {
-            Copy-Item -Path 'C:\Windows\CAPolicy.inf' -Destination "$DatePath\CAPolicy.inf"
+        if ($false -eq $SkipCAPolicyBackup) {
+            if (Test-Path -Path 'C:\Windows\CAPolicy.inf') {
+                Copy-Item -Path 'C:\Windows\CAPolicy.inf' -Destination "$DatePath\CAPolicy.inf"
+            }
         }
-        Copy-Item -Path 'C:\Windows\System32\CertSrv\CertEnroll' -Destination "$DatePath\CertEnroll" -Recurse
+        if ($false -eq $SkipCertEnrollBackup) {
+            Copy-Item -Path 'C:\Windows\System32\CertSrv\CertEnroll' -Destination "$DatePath\CertEnroll" -Recurse
+        }
         
 
-        $aia = Get-CAAuthorityInformationAccess
-        $aia | Export-Csv -Path "$ExtentionsPath\aia.csv"
+        # $aia = Get-CAAuthorityInformationAccess
+        # $aia | Export-Csv -Path "$ExtentionsPath\aia.csv"
 
-        $cdp = Get-CACrlDistributionPoint
-        $cdp | Export-Csv -Path "$ExtentionsPath\cdp.csv"
+        # $cdp = Get-CACrlDistributionPoint
+        # $cdp | Export-Csv -Path "$ExtentionsPath\cdp.csv"
 
         Write-Host "Backup successfull" -ForegroundColor Green
         
@@ -324,12 +344,16 @@ elseif (
             }
         }
 
-        Write-Host "Restoring CertEnroll from backup" -ForegroundColor Green
-        Copy-Item -Path "$BackupPath\CertEnroll" -Destination 'C:\Windows\System32\CertSrv\' -Recurse -Force
+        if ($false -eq $SkipCertEnrollBackup) {
+            Write-Host "Restoring CertEnroll from backup" -ForegroundColor Green
+            Copy-Item -Path "$BackupPath\CertEnroll" -Destination 'C:\Windows\System32\CertSrv\' -Recurse -Force
+        }
 
-        if (Test-Path "$BackupPath\CAPolicy.inf") {
-            Write-Host "Restoring CAPolicy.inf from backup" -ForegroundColor Green
-            Copy-Item -Path "$BackupPath\CAPolicy.inf" -Destination 'C:\Windows\CAPolicy.inf' -Recurse -Force
+        if ($false -eq $SkipCAPolicyBackup) {
+            if (Test-Path "$BackupPath\CAPolicy.inf") {
+                Write-Host "Restoring CAPolicy.inf from backup" -ForegroundColor Green
+                Copy-Item -Path "$BackupPath\CAPolicy.inf" -Destination 'C:\Windows\CAPolicy.inf' -Recurse -Force
+            }
         }
 
         Write-Host "Restoring CA from backup" -ForegroundColor Green
