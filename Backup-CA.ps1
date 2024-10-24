@@ -327,6 +327,11 @@ elseif (
         Write-Host "Restoring CertEnroll from backup" -ForegroundColor Green
         Copy-Item -Path "$BackupPath\CertEnroll" -Destination 'C:\Windows\System32\CertSrv\' -Recurse -Force
 
+        if (Test-Path "$BackupPath\CAPolicy.inf") {
+            Write-Host "Restoring CertPolicy from backup" -ForegroundColor Green
+            Copy-Item -Path "$BackupPath\CAPolicy.inf" -Destination 'C:\Windows\CAPolicy.inf' -Recurse -Force
+        }
+
         Write-Host "Restoring CA from backup" -ForegroundColor Green
         Restore-CARoleService -Path $BackupPath -Password $backupPassword -Force
 
