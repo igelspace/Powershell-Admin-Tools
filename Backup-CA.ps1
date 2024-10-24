@@ -54,7 +54,7 @@ Param(
     [Parameter(Mandatory = $false, ParameterSetName = 'RestoreWithSecurePassword')]
     [Parameter(Mandatory = $false, ParameterSetName = 'RestoreWithPassword')]
     [Parameter(Mandatory = $false, ParameterSetName = 'RestoreWithPasswordFile')]
-    [switch] $SkipRegistryBackup = $false,
+    [switch] $SkipRegistry = $false,
 
     [Parameter(Mandatory = $false, ParameterSetName = 'Password')]
     [Parameter(Mandatory = $false, ParameterSetName = 'SecurePassword')]
@@ -62,7 +62,7 @@ Param(
     [Parameter(Mandatory = $false, ParameterSetName = 'RestoreWithSecurePassword')]
     [Parameter(Mandatory = $false, ParameterSetName = 'RestoreWithPassword')]
     [Parameter(Mandatory = $false, ParameterSetName = 'RestoreWithPasswordFile')]
-    [switch] $SkipCertEnrollBackup = $false,
+    [switch] $SkipCertEnroll = $false,
 
     [Parameter(Mandatory = $false, ParameterSetName = 'Password')]
     [Parameter(Mandatory = $false, ParameterSetName = 'SecurePassword')]
@@ -70,7 +70,15 @@ Param(
     [Parameter(Mandatory = $false, ParameterSetName = 'RestoreWithSecurePassword')]
     [Parameter(Mandatory = $false, ParameterSetName = 'RestoreWithPassword')]
     [Parameter(Mandatory = $false, ParameterSetName = 'RestoreWithPasswordFile')]
-    [switch] $SkipCAPolicyBackup = $false
+    [switch] $SkipCAPolicy = $false,
+
+    [Parameter(Mandatory = $false, ParameterSetName = 'Password')]
+    [Parameter(Mandatory = $false, ParameterSetName = 'SecurePassword')]
+    [Parameter(Mandatory = $false, ParameterSetName = 'PasswordFile')]
+    [Parameter(Mandatory = $false, ParameterSetName = 'RestoreWithSecurePassword')]
+    [Parameter(Mandatory = $false, ParameterSetName = 'RestoreWithPassword')]
+    [Parameter(Mandatory = $false, ParameterSetName = 'RestoreWithPasswordFile')]
+    [switch] $SkipTemplates = $false
 )
 #endregion
 
@@ -94,39 +102,57 @@ if ($PSCmdlet.ParameterSetName -eq 'Help') {
     Write-Host '        [-BackupPath <string>]' -ForegroundColor White
     Write-Host '        [-Retention <int>]' -ForegroundColor White
     Write-Host '        [-SkipCleanup]' -ForegroundColor White
-    Write-Host '        [-SkipRegistryBackup]' -ForegroundColor White
+    Write-Host '        [-SkipRegistry]' -ForegroundColor White
+    Write-Host '        [-SkipCertEnroll]' -ForegroundColor White
+    Write-Host '        [-SkipCAPolicy]' -ForegroundColor White
+    Write-Host '        [-SkipTemplates]' -ForegroundColor White
     Write-Host ''
     Write-Host '    .\Backup-CA.ps1 ' -ForegroundColor Yellow
     Write-Host '        -SecurePassword <securestring>' -ForegroundColor Blue
     Write-Host '        [-BackupPath <string>]' -ForegroundColor White
     Write-Host '        [-Retention <int>]' -ForegroundColor White
     Write-Host '        [-SkipCleanup]' -ForegroundColor White
-    Write-Host '        [-SkipRegistryBackup]' -ForegroundColor White
+    Write-Host '        [-SkipRegistry]' -ForegroundColor White
+    Write-Host '        [-SkipCertEnroll]' -ForegroundColor White
+    Write-Host '        [-SkipCAPolicy]' -ForegroundColor White
+    Write-Host '        [-SkipTemplates]' -ForegroundColor White
     Write-Host ''
     Write-Host '    .\Backup-CA.ps1 ' -ForegroundColor Yellow
     Write-Host '        -PasswordFile <string>' -ForegroundColor Blue
     Write-Host '        [-BackupPath <string>]' -ForegroundColor White
     Write-Host '        [-Retention <int>]' -ForegroundColor White
     Write-Host '        [-SkipCleanup]' -ForegroundColor White
-    Write-Host '        [-SkipRegistryBackup]' -ForegroundColor White
+    Write-Host '        [-SkipRegistry]' -ForegroundColor White
+    Write-Host '        [-SkipCertEnroll]' -ForegroundColor White
+    Write-Host '        [-SkipCAPolicy]' -ForegroundColor White
+    Write-Host '        [-SkipTemplates]' -ForegroundColor White
     Write-Host ''
     Write-Host '    .\Backup-CA.ps1 ' -ForegroundColor Yellow
     Write-Host '        -Password <string>' -ForegroundColor Blue
     Write-Host '        -BackupPath <string>' -ForegroundColor Blue
     Write-Host '        -Restore' -ForegroundColor Blue
-    Write-Host '        [-SkipRegistryBackup]' -ForegroundColor White
+    Write-Host '        [-SkipRegistry]' -ForegroundColor White
+    Write-Host '        [-SkipCertEnroll]' -ForegroundColor White
+    Write-Host '        [-SkipCAPolicy]' -ForegroundColor White
+    Write-Host '        [-SkipTemplates]' -ForegroundColor White
     Write-Host ''
     Write-Host '    .\Backup-CA.ps1 ' -ForegroundColor Yellow
     Write-Host '        -SecurePassword <string>' -ForegroundColor Blue
     Write-Host '        -BackupPath <string>' -ForegroundColor Blue
     Write-Host '        -Restore' -ForegroundColor Blue
-    Write-Host '        [-SkipRegistryBackup]' -ForegroundColor White
+    Write-Host '        [-SkipRegistry]' -ForegroundColor White
+    Write-Host '        [-SkipCertEnroll]' -ForegroundColor White
+    Write-Host '        [-SkipCAPolicy]' -ForegroundColor White
+    Write-Host '        [-SkipTemplates]' -ForegroundColor White
     Write-Host ''
     Write-Host '    .\Backup-CA.ps1 ' -ForegroundColor Yellow
     Write-Host '        -PasswordFile <string>' -ForegroundColor Blue
     Write-Host '        -BackupPath <string>' -ForegroundColor Blue
     Write-Host '        -Restore' -ForegroundColor Blue
-    Write-Host '        [-SkipRegistryBackup]' -ForegroundColor White
+    Write-Host '        [-SkipRegistry]' -ForegroundColor White
+    Write-Host '        [-SkipCertEnroll]' -ForegroundColor White
+    Write-Host '        [-SkipCAPolicy]' -ForegroundColor White
+    Write-Host '        [-SkipTemplates]' -ForegroundColor White
     Write-Host ''
     Write-Host '    .\Backup-CA.ps1 ' -ForegroundColor Yellow
     Write-Host '        -Help' -ForegroundColor Blue
@@ -205,6 +231,17 @@ if ($PSCmdlet.ParameterSetName -eq 'Help') {
     Write-Host ''
     Write-Host '    -SkipCleanup' -ForegroundColor Green
     Write-Host '        Flag for skipping cleanup of old backups'
+    Write-Host '    -SkipRegistry' -ForegroundColor Green
+    Write-Host '        Flag for skipping backup / restore of CA registry intries'
+    Write-Host ''
+    Write-Host '    -SkipCertEnroll' -ForegroundColor Green
+    Write-Host '        Flag for skipping backup / restore of CertEntroll folder'
+    Write-Host ''
+    Write-Host '    -SkipCAPolicy' -ForegroundColor Green
+    Write-Host '        Flag for skipping backup / restore of CAPolicy.inf'
+    Write-Host ''
+    Write-Host '    -SkipTemplates' -ForegroundColor Green
+    Write-Host '        Flag for skipping backup / restore of published templates'
     Write-Host ''
     Write-Host ''
 
@@ -237,11 +274,9 @@ elseif (
         $date = Get-Date -Format yyyy-dd-MM-HH-mm
         $datum = ((Get-Date).AddDays(-$Retention))
         $DatePath = Join-Path -Path $BackupPath -ChildPath $date
-        # $ExtentionsPath = Join-Path $DatePath -ChildPath "Extentions"
             
         # Create path if not exist
         if (-not $(Test-Path $DatePath)) { New-Item -Path $DatePath -ItemType Directory -Force | Out-Null }
-        # if (-not $(Test-Path $ExtentionsPath)) { New-Item -Path $ExtentionsPath -ItemType Directory -Force | Out-Null }
             
         # Prepare password
         switch ($PSCmdlet.ParameterSetName) {
@@ -258,33 +293,51 @@ elseif (
         }
         
         # Backup actual ca
+        Write-Host "Backing up CA" -ForegroundColor Green
         Backup-CARoleService -Path $DatePath -Password $backupPassword -Force
 
-        if ($false -eq $SkipRegistryBackup) {
-            # Export-RegistryFile -Path "HKLM\System\CurrentControlSet\Services\CertSvc" -Destination "$DatePath\CertSvc.reg"
-            reg export "HKLM\System\CurrentControlSet\Services\CertSvc" "$DatePath\CertSvc.reg"
+        if ($false -eq $SkipRegistry) {
+            Write-Host "Backing up relevant registry entries" -ForegroundColor Green
+            $registryResult = Invoke-Command { reg export "HKLM\System\CurrentControlSet\Services\CertSvc" "$DatePath\CertSvc.reg" }
+            if ($registryResult -ne "The operation completed successfully.") {
+                Write-Host "Error backing up registry entries" -ForegroundColor Red
+            }
+        }
+        else {
+            Write-Host "Skipping registry backup" -ForegroundColor Cyan
         }
 
-        if ($false -eq $SkipCAPolicyBackup) {
+        if ($false -eq $SkipCAPolicy) {
+            Write-Host "Backing up CAPolicy.inf" -ForegroundColor Green
             if (Test-Path -Path 'C:\Windows\CAPolicy.inf') {
                 Copy-Item -Path 'C:\Windows\CAPolicy.inf' -Destination "$DatePath\CAPolicy.inf"
             }
+            else {
+                Write-Host "No CAPolicy.inf found" -ForegroundColor Yellow
+            }
         }
-        if ($false -eq $SkipCertEnrollBackup) {
+        else {
+            Write-Host "Skipping CAPolicy.inf backup" -ForegroundColor Cyan
+        }
+        
+        if ($false -eq $SkipCertEnroll) {
+            Write-Host "Backing up CertEnroll" -ForegroundColor Green
             Copy-Item -Path 'C:\Windows\System32\CertSrv\CertEnroll' -Destination "$DatePath\CertEnroll" -Recurse
         }
+        else {
+            Write-Host "Skipping CertEnroll backup" -ForegroundColor Cyan
+        }
         
+        if ($false -eq $SkipTemplates) {
+            Write-Host "Backing up issued templates" -ForegroundColor Green
+            Get-CATemplate | Foreach-Object { $_.Name } | Out-File -FilePath "$DatePath\CATemplates.txt" -Encoding String -Force
+        }
+        else {
+            Write-Host "Skipping template backup" -ForegroundColor Cyan
+        }
 
-        # $aia = Get-CAAuthorityInformationAccess
-        # $aia | Export-Csv -Path "$ExtentionsPath\aia.csv"
-
-        # $cdp = Get-CACrlDistributionPoint
-        # $cdp | Export-Csv -Path "$ExtentionsPath\cdp.csv"
-
-        Write-Host "Backup successfull" -ForegroundColor Green
-        
+        Write-Host "Backup successfull" -ForegroundColor Green        
         Write-Host "Backup location: $DatePath" -ForegroundColor Green
-
     }
     catch {
         Write-Host "Something went wrong with backing up the CA." -ForegroundColor Red
@@ -333,29 +386,49 @@ elseif (
         Write-Host "Stopping CA service" -ForegroundColor Green
         Stop-Service certsvc
 
-        if ($false -eq $SkipRegistryBackup) {
+        if ($false -eq $SkipRegistry) {
             Write-Host "Restoring registry from backup" -ForegroundColor Green
             # Import-Registry -Path "$BackupPath\CertSvc.reg"
             if (Test-Path "$BackupPath\CertSvc.reg") {
-                reg import "$BackupPath\CertSvc.reg"
+                # $registryResult = Invoke-Command { reg import "$BackupPath\CertSvc.reg" }
+                try {
+                    regedit /s "$BackupPath\CertSvc.reg"
+                }
+                catch{
+                    Write-Host "Error restoring registry entries" -ForegroundColor Red
+                }
+                # if ($registryResult -ne "The operation completed successfully.") {
+                # }
             }
             else {
                 Write-Host "No registry backup found" -ForegroundColor Red
             }
         }
+        else {
+            Write-Host "Skipping registry restore" -ForegroundColor Cyan
+        }
 
-        if ($false -eq $SkipCertEnrollBackup) {
+        if ($false -eq $SkipCertEnroll) {
             Write-Host "Restoring CertEnroll from backup" -ForegroundColor Green
             Copy-Item -Path "$BackupPath\CertEnroll" -Destination 'C:\Windows\System32\CertSrv\' -Recurse -Force
         }
+        else {
+            Write-Host "Skipping CertEnroll restore" -ForegroundColor Cyan
+        }
 
-        if ($false -eq $SkipCAPolicyBackup) {
+        if ($false -eq $SkipCAPolicy) {
             if (Test-Path "$BackupPath\CAPolicy.inf") {
                 Write-Host "Restoring CAPolicy.inf from backup" -ForegroundColor Green
                 Copy-Item -Path "$BackupPath\CAPolicy.inf" -Destination 'C:\Windows\CAPolicy.inf' -Recurse -Force
             }
+            else {
+                Write-Host "No CAPolicy.inf found" -ForegroundColor Yellow
+            }
         }
-
+        else {
+            Write-Host "Skipping CAPolicy.inf restore" -ForegroundColor Cyan
+        }
+        
         Write-Host "Restoring CA from backup" -ForegroundColor Green
         Restore-CARoleService -Path $BackupPath -Password $backupPassword -Force
 

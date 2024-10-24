@@ -10,7 +10,11 @@ Provides capabilities for backing up and restoring a windows certificate authori
 - CA Backup
 - CA Restore
 - Password file creation (containing a securestring)
+- Backup / Restore of CAPolicy.inf
+- Backup / Restore of CertEnroll
+- Backup / Restore of CA Registry entries
 - Old backup cleanup
+- Backup of published Templates
 - Works with Task Scheduler
 
 ---
