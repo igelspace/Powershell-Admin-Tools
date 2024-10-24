@@ -46,7 +46,15 @@ Param(
     [Parameter(Mandatory = $true, ParameterSetName = 'RestoreWithSecurePassword')]
     [Parameter(Mandatory = $true, ParameterSetName = 'RestoreWithPassword')]
     [Parameter(Mandatory = $true, ParameterSetName = 'RestoreWithPasswordFile')]
-    [switch] $Restore = $false
+    [switch] $Restore = $false,
+
+    [Parameter(Mandatory = $false, ParameterSetName = 'Password')]
+    [Parameter(Mandatory = $false, ParameterSetName = 'SecurePassword')]
+    [Parameter(Mandatory = $false, ParameterSetName = 'PasswordFile')]
+    [Parameter(Mandatory = $false, ParameterSetName = 'RestoreWithSecurePassword')]
+    [Parameter(Mandatory = $false, ParameterSetName = 'RestoreWithPassword')]
+    [Parameter(Mandatory = $false, ParameterSetName = 'RestoreWithPasswordFile')]
+    [switch] $SkipRegistryBackup = $false
 )
 #endregion
 
@@ -70,33 +78,39 @@ if ($PSCmdlet.ParameterSetName -eq 'Help') {
     Write-Host '        [-BackupPath <string>]' -ForegroundColor White
     Write-Host '        [-Retention <int>]' -ForegroundColor White
     Write-Host '        [-SkipCleanup]' -ForegroundColor White
+    Write-Host '        [-SkipRegistryBackup]' -ForegroundColor White
     Write-Host ''
     Write-Host '    .\Backup-CA.ps1 ' -ForegroundColor Yellow
     Write-Host '        -SecurePassword <securestring>' -ForegroundColor Blue
     Write-Host '        [-BackupPath <string>]' -ForegroundColor White
     Write-Host '        [-Retention <int>]' -ForegroundColor White
     Write-Host '        [-SkipCleanup]' -ForegroundColor White
+    Write-Host '        [-SkipRegistryBackup]' -ForegroundColor White
     Write-Host ''
     Write-Host '    .\Backup-CA.ps1 ' -ForegroundColor Yellow
     Write-Host '        -PasswordFile <string>' -ForegroundColor Blue
     Write-Host '        [-BackupPath <string>]' -ForegroundColor White
     Write-Host '        [-Retention <int>]' -ForegroundColor White
     Write-Host '        [-SkipCleanup]' -ForegroundColor White
+    Write-Host '        [-SkipRegistryBackup]' -ForegroundColor White
     Write-Host ''
     Write-Host '    .\Backup-CA.ps1 ' -ForegroundColor Yellow
     Write-Host '        -Password <string>' -ForegroundColor Blue
     Write-Host '        -BackupPath <string>' -ForegroundColor Blue
     Write-Host '        -Restore' -ForegroundColor Blue
+    Write-Host '        [-SkipRegistryBackup]' -ForegroundColor White
     Write-Host ''
     Write-Host '    .\Backup-CA.ps1 ' -ForegroundColor Yellow
     Write-Host '        -SecurePassword <string>' -ForegroundColor Blue
     Write-Host '        -BackupPath <string>' -ForegroundColor Blue
     Write-Host '        -Restore' -ForegroundColor Blue
+    Write-Host '        [-SkipRegistryBackup]' -ForegroundColor White
     Write-Host ''
     Write-Host '    .\Backup-CA.ps1 ' -ForegroundColor Yellow
     Write-Host '        -PasswordFile <string>' -ForegroundColor Blue
     Write-Host '        -BackupPath <string>' -ForegroundColor Blue
     Write-Host '        -Restore' -ForegroundColor Blue
+    Write-Host '        [-SkipRegistryBackup]' -ForegroundColor White
     Write-Host ''
     Write-Host '    .\Backup-CA.ps1 ' -ForegroundColor Yellow
     Write-Host '        -Help' -ForegroundColor Blue
@@ -207,9 +221,11 @@ elseif (
         $date = Get-Date -Format yyyy-dd-MM-HH-mm
         $datum = ((Get-Date).AddDays(-$Retention))
         $DatePath = Join-Path -Path $BackupPath -ChildPath $date
+        # $ExtentionsPath = Join-Path $DatePath -ChildPath "Extentions"
             
         # Create path if not exist
         if (-not $(Test-Path $DatePath)) { New-Item -Path $DatePath -ItemType Directory -Force | Out-Null }
+        # if (-not $(Test-Path $ExtentionsPath)) { New-Item -Path $ExtentionsPath -ItemType Directory -Force | Out-Null }
             
         # Prepare password
         switch ($PSCmdlet.ParameterSetName) {
@@ -217,7 +233,7 @@ elseif (
                 $backupPassword = $SecurePassword
             }
             'PasswordFile' {
-                if (-not $(Test-Path $PasswordFile)) {throw [System.IO.FileNotFoundException] "Path to password file `"$PasswordFile`" not found"}
+                if (-not $(Test-Path $PasswordFile)) { throw [System.IO.FileNotFoundException] "Path to password file `"$PasswordFile`" not found" }
                 $backupPassword = Get-Content $PasswordFile | ConvertTo-SecureString
             }
             'Password' {
@@ -228,8 +244,27 @@ elseif (
         # Backup actual ca
         Backup-CARoleService -Path $DatePath -Password $backupPassword -Force
 
+        if ($false -eq $SkipRegistryBackup) {
+            # Export-RegistryFile -Path "HKLM\System\CurrentControlSet\Services\CertSvc" -Destination "$DatePath\CertSvc.reg"
+            reg export "HKLM\System\CurrentControlSet\Services\CertSvc" "$DatePath\CertSvc.reg"
+        }
+
+        if (Test-Path -Path 'C:\Windows\CAPolicy.inf') {
+            Copy-Item -Path 'C:\Windows\CAPolicy.inf' -Destination "$DatePath\CAPolicy.inf"
+        }
+        Copy-Item -Path 'C:\Windows\System32\CertSrv\CertEnroll' -Destination "$DatePath\CertEnroll" -Recurse
+        
+
+        $aia = Get-CAAuthorityInformationAccess
+        $aia | Export-Csv -Path "$ExtentionsPath\aia.csv"
+
+        $cdp = Get-CACrlDistributionPoint
+        $cdp | Export-Csv -Path "$ExtentionsPath\cdp.csv"
+
         Write-Host "Backup successfull" -ForegroundColor Green
+        
         Write-Host "Backup location: $DatePath" -ForegroundColor Green
+
     }
     catch {
         Write-Host "Something went wrong with backing up the CA." -ForegroundColor Red
@@ -257,14 +292,17 @@ elseif (
     $PSCmdlet.ParameterSetName -eq 'RestoreWithPasswordFile'
 ) {
     try {
-        if (-not $(Test-Path $BackupPath)) {throw [System.IO.FileNotFoundException] "Path to backup location `"$BackupPath`" not found"}
+        $ExtentionsPath = Join-Path $BackupPath -ChildPath "Extentions"
+        if (-not $(Test-Path $ExtentionsPath)) { New-Item -Path $ExtentionsPath -ItemType Directory -Force | Out-Null }
+
+        if (-not $(Test-Path $BackupPath)) { throw [System.IO.FileNotFoundException] "Path to backup location `"$BackupPath`" not found" }
 
         switch ($PSCmdlet.ParameterSetName) {
             'RestoreWithSecurePassword' {
                 $backupPassword = $SecurePassword
             }
             'RestoreWithPasswordFile' {
-                if (-not $(Test-Path $PasswordFile)) {throw [System.IO.FileNotFoundException] "Path to password file `"$PasswordFile`" not found"}
+                if (-not $(Test-Path $PasswordFile)) { throw [System.IO.FileNotFoundException] "Path to password file `"$PasswordFile`" not found" }
                 $backupPassword = Get-Content $PasswordFile | ConvertTo-SecureString
             }
             'RestoreWithPassword' {
@@ -275,8 +313,23 @@ elseif (
         Write-Host "Stopping CA service" -ForegroundColor Green
         Stop-Service certsvc
 
+        if ($false -eq $SkipRegistryBackup) {
+            Write-Host "Restoring registry from backup" -ForegroundColor Green
+            # Import-Registry -Path "$BackupPath\CertSvc.reg"
+            if (Test-Path "$BackupPath\CertSvc.reg") {
+                reg import "$BackupPath\CertSvc.reg"
+            }
+            else {
+                Write-Host "No registry backup found" -ForegroundColor Red
+            }
+        }
+
+        Write-Host "Restoring CertEnroll from backup" -ForegroundColor Green
+        Copy-Item -Path "$BackupPath\CertEnroll" -Destination 'C:\Windows\System32\CertSrv\' -Recurse -Force
+
         Write-Host "Restoring CA from backup" -ForegroundColor Green
         Restore-CARoleService -Path $BackupPath -Password $backupPassword -Force
+
 
         Write-Host "Starting CA service" -ForegroundColor Green
         Start-Service certsvc
