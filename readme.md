@@ -1,6 +1,6 @@
 # PowerShell Admin Tools
 
-A small set of PowerShell tools for handling various admin tasks. More tools may be added periodically
+A small set of PowerShell tools for handling various admin tasks. More tools may be added in the future
 
 ## Current Tools
 
