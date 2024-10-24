@@ -19,6 +19,15 @@ Provides capabilities for backing up and restoring a windows certificate authori
 
 ---
 
+### Sign-Script.ps1
+Provides capabilities for signing scripts.
+#### Features:
+- Sign script via thumbprint
+- Sign script via serial number
+- Cert selection from store (Cert:\CurrentUser\My) for signing
+
+---
+
 ### Delete-Certificate.ps1
 Provides capabilities for completely deleting certificates (including private keys, which remain stored on the computer when just deleting the certificate in certlm.msc or certmgr.msc).
 #### Features:
