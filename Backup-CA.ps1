@@ -227,6 +227,9 @@ elseif (
         
         # Backup actual ca
         Backup-CARoleService -Path $DatePath -Password $backupPassword -Force
+
+        Write-Host "Backup successfull" -ForegroundColor Green
+        Write-Host "Backup location: $DatePath" -ForegroundColor Green
     }
     catch {
         Write-Host "Something went wrong with backing up the CA." -ForegroundColor Red
