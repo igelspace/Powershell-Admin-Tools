@@ -88,6 +88,7 @@ if ($PSCmdlet.ParameterSetName -eq 'Help') {
     Write-Host '            SHA256'
     Write-Host '            SHA384'
     Write-Host '            SHA512'
+    Write-Host '        Defaults to: SHA256'
     Write-Host ''
     Write-Host '    -Help' -ForegroundColor Green
     Write-Host '        Displays this help page'
