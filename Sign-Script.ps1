@@ -19,6 +19,14 @@ param(
     [switch]
     $Select = $false,
 
+    [Parameter(Mandatory = $true, ParameterSetName = 'Thumbprint')]
+    [Parameter(Mandatory = $true, ParameterSetName = 'SerialNumber')]
+    [Parameter(Mandatory = $true, ParameterSetName = 'Select')]
+    [ValidateSet('MD5', 'SHA1', 'SHA256', 'SHA384', 'SHA512')]
+    [string]
+    $HasAlgorithm = 'SHA256',
+    
+
     [Parameter(Mandatory = $false, ParameterSetName = 'Help')]
     [switch] $Help = $false
 )
@@ -35,14 +43,17 @@ if ($PSCmdlet.ParameterSetName -eq 'Help') {
     Write-Host '    .\Sign-Script.ps1 ' -ForegroundColor Yellow
     Write-Host '        -Thumbprint <string>' -ForegroundColor Blue
     Write-Host '        -Path <string>' -ForegroundColor Blue
+    Write-Host '        [-HashAlgoritm <string>]' -ForegroundColor White
     Write-Host ''
     Write-Host '    .\Sign-Script.ps1 ' -ForegroundColor Yellow
     Write-Host '        -SerialNumber <string>' -ForegroundColor Blue
     Write-Host '        -Path <string>' -ForegroundColor Blue
+    Write-Host '        [-HashAlgoritm <string>]' -ForegroundColor White
     Write-Host ''
     Write-Host '    .\Sign-Script.ps1 ' -ForegroundColor Yellow
     Write-Host '        -Path <string>' -ForegroundColor Blue
     Write-Host '        -Select' -ForegroundColor Blue
+    Write-Host '        [-HashAlgoritm <string>]' -ForegroundColor White
     Write-Host ''
     Write-Host '    .\Sign-Script.ps1 ' -ForegroundColor Yellow
     Write-Host '        -Help' -ForegroundColor Blue
@@ -69,6 +80,15 @@ if ($PSCmdlet.ParameterSetName -eq 'Help') {
     Write-Host '    Shows a list of all code signing certificates at "Cert:\CurrentUser\My", allows for selection and then signs the script at "C:\script.ps1" with the certificate selected'
     Write-Host ''
     Write-Host '# Parameters' -ForegroundColor Cyan
+    Write-Host '    -HashAlgorithm' -ForegroundColor Green
+    Write-Host '        Select the hash algorithm.'
+    Write-Host '        Possible values:'
+    Write-Host '            MD5'
+    Write-Host '            SHA1'
+    Write-Host '            SHA256'
+    Write-Host '            SHA384'
+    Write-Host '            SHA512'
+    Write-Host ''
     Write-Host '    -Help' -ForegroundColor Green
     Write-Host '        Displays this help page'
     Write-Host ''
@@ -140,9 +160,9 @@ switch ($PSCmdlet.ParameterSetName) {
     'SerialNumber' {
         $cert = Get-ChildItem $certStorePath | Where-Object { $_.SerialNumber -eq $SerialNumber };
         if ($null -eq $cert) {
-            throw [System..Cert] "Certificate with sertialnumber `"$SerialNumber`" not found."
+            throw [System..Cert] "Certificate with serialnumber `"$SerialNumber`" not found."
         }
     }
 }
 
-Set-AuthenticodeSignature -FilePath $Path -Certificate $cert
+Set-AuthenticodeSignature -FilePath $Path -Certificate $cert -HashAlgorithm $HasAlgorithm
