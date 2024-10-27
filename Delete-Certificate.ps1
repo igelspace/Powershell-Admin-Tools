@@ -58,7 +58,7 @@ DynamicParam {
 process {
     try {
         #region Help
-        if ($Help) {
+        if ($PSCmdlet.ParameterSetName -eq 'Help') {
             Write-Host ''
             Write-Host '###################################################' -ForegroundColor Cyan
             Write-Host '#####                                         #####' -ForegroundColor Cyan
